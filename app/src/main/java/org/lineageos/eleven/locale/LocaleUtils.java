@@ -16,12 +16,7 @@
 
 package org.lineageos.eleven.locale;
 
-import android.provider.ContactsContract.FullNameStyle;
-import android.provider.ContactsContract.PhoneticNameStyle;
-import android.text.TextUtils;
 import android.util.Log;
-
-import org.lineageos.eleven.locale.HanziToPinyin.Token;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -35,7 +30,6 @@ import java.util.Set;
 
 import android.icu.text.AlphabeticIndex;
 import android.icu.text.AlphabeticIndex.ImmutableIndex;
-import android.icu.text.Transliterator;
 
 /**
  * This utility class provides specialized handling for locale specific
@@ -77,7 +71,6 @@ public class LocaleUtils {
         protected final ImmutableIndex mAlphabeticIndex;
         private final int mAlphabeticIndexBucketCount;
         private final int mNumberBucketIndex;
-        private final boolean mEnableSecondaryLocalePinyin;
 
         public LocaleUtilsBase(LocaleSet locales) {
             // AlphabeticIndex.getBucketLabel() uses a binary search across
@@ -93,7 +86,6 @@ public class LocaleUtils {
             // Cyrillic because their alphabets are complementary supersets
             // of Russian.
             final Locale secondaryLocale = locales.getSecondaryLocale();
-            mEnableSecondaryLocalePinyin = locales.isSecondaryLocaleSimplifiedChinese();
             AlphabeticIndex ai = new AlphabeticIndex(locales.getPrimaryLocale())
                 .setMaxLabelCount(300);
             if (secondaryLocale != null) {
@@ -152,13 +144,6 @@ public class LocaleUtils {
                 return mNumberBucketIndex;
             }
 
-            /**
-             * TODO: ICU 52 AlphabeticIndex doesn't support Simplified Chinese
-             * as a secondary locale. Remove the following if that is added.
-             */
-            if (mEnableSecondaryLocalePinyin) {
-                name = HanziToPinyin.getInstance().transliterate(name);
-            }
             final int bucket = mAlphabeticIndex.getBucketIndex(name);
             if (bucket < 0) {
                 return -1;
@@ -307,113 +292,9 @@ public class LocaleUtils {
 
         @Override
         public Iterator<String> getNameLookupKeys(String name, int nameStyle) {
-            // Hiragana and Katakana will be positively identified as Japanese.
-            if (nameStyle == PhoneticNameStyle.JAPANESE) {
-                return getRomajiNameLookupKeys(name);
-            }
             return null;
         }
 
-        private static boolean mInitializedTransliterator;
-        private static Transliterator mJapaneseTransliterator;
-
-        private static Transliterator getJapaneseTransliterator() {
-            synchronized(JapaneseContactUtils.class) {
-                if (!mInitializedTransliterator) {
-                    mInitializedTransliterator = true;
-                    Transliterator t = null;
-                    try {
-                        t = Transliterator.getInstance("Hiragana-Latin; Katakana-Latin;"
-                                + " Latin-Ascii");
-                    } catch (RuntimeException e) {
-                        Log.w(TAG, "Hiragana/Katakana-Latin transliterator data"
-                                + " is missing");
-                    }
-                    mJapaneseTransliterator = t;
-                }
-                return mJapaneseTransliterator;
-            }
-        }
-
-        public static Iterator<String> getRomajiNameLookupKeys(String name) {
-            final Transliterator t = getJapaneseTransliterator();
-            if (t == null) {
-                return null;
-            }
-            final String romajiName = t.transliterate(name);
-            if (TextUtils.isEmpty(romajiName) ||
-                    TextUtils.equals(name, romajiName)) {
-                return null;
-            }
-            final HashSet<String> keys = new HashSet<String>();
-            keys.add(romajiName);
-            return keys.iterator();
-        }
-    }
-
-    /**
-     * Simplified Chinese specific locale overrides. Uses ICU Transliterator
-     * for generating pinyin transliteration.
-     *
-     * sortKey: unchanged (same as name)
-     * nameLookupKeys: adds additional name lookup keys
-     *     - Chinese character's pinyin and pinyin's initial character.
-     *     - Latin word and initial character.
-     * labels: unchanged
-     *     Simplified Chinese labels are the same as English: [A-Z], #, " "
-     */
-    private static class SimplifiedChineseContactUtils
-        extends LocaleUtilsBase {
-        public SimplifiedChineseContactUtils(LocaleSet locales) {
-            super(locales);
-        }
-
-        @Override
-        public Iterator<String> getNameLookupKeys(String name, int nameStyle) {
-            if (nameStyle != FullNameStyle.JAPANESE &&
-                    nameStyle != FullNameStyle.KOREAN) {
-                return getPinyinNameLookupKeys(name);
-            }
-            return null;
-        }
-
-        public static Iterator<String> getPinyinNameLookupKeys(String name) {
-            // TODO : Reduce the object allocation.
-            HashSet<String> keys = new HashSet<String>();
-            ArrayList<Token> tokens = HanziToPinyin.getInstance().getTokens(name);
-            final int tokenCount = tokens.size();
-            final StringBuilder keyPinyin = new StringBuilder();
-            final StringBuilder keyInitial = new StringBuilder();
-            // There is no space among the Chinese Characters, the variant name
-            // lookup key wouldn't work for Chinese. The keyOriginal is used to
-            // build the lookup keys for itself.
-            final StringBuilder keyOriginal = new StringBuilder();
-            for (int i = tokenCount - 1; i >= 0; i--) {
-                final Token token = tokens.get(i);
-                if (Token.UNKNOWN == token.type) {
-                    continue;
-                }
-                if (Token.PINYIN == token.type) {
-                    keyPinyin.insert(0, token.target);
-                    keyInitial.insert(0, token.target.charAt(0));
-                } else if (Token.LATIN == token.type) {
-                    // Avoid adding space at the end of String.
-                    if (keyPinyin.length() > 0) {
-                        keyPinyin.insert(0, ' ');
-                    }
-                    if (keyOriginal.length() > 0) {
-                        keyOriginal.insert(0, ' ');
-                    }
-                    keyPinyin.insert(0, token.source);
-                    keyInitial.insert(0, token.source.charAt(0));
-                }
-                keyOriginal.insert(0, token.source);
-                keys.add(keyOriginal.toString());
-                keys.add(keyPinyin.toString());
-                keys.add(keyInitial.toString());
-            }
-            return keys.iterator();
-        }
     }
 
     private static final String JAPANESE_LANGUAGE = Locale.JAPANESE.getLanguage().toLowerCase();
@@ -430,8 +311,6 @@ public class LocaleUtils {
         }
         if (mLocales.isPrimaryLanguage(JAPANESE_LANGUAGE)) {
             mUtils = new JapaneseContactUtils(mLocales);
-        } else if (mLocales.isPrimaryLocaleSimplifiedChinese()) {
-            mUtils = new SimplifiedChineseContactUtils(mLocales);
         } else {
             mUtils = new LocaleUtilsBase(mLocales);
         }

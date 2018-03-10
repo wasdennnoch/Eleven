@@ -34,6 +34,7 @@ public class LoadingEmptyContainer extends FrameLayout {
 
     private Handler mHandler;
     private Runnable mShowLoadingRunnable;
+    private boolean mShowLoadingRunnableQueued = false;
 
     public LoadingEmptyContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -44,6 +45,7 @@ public class LoadingEmptyContainer extends FrameLayout {
             public void run() {
                 findViewById(R.id.progressbar).setVisibility(View.VISIBLE);
                 getNoResultsContainer().setVisibility(View.INVISIBLE);
+                mShowLoadingRunnableQueued = false;
             }
         };
     }
@@ -63,13 +65,15 @@ public class LoadingEmptyContainer extends FrameLayout {
     public void showLoading() {
         hideAll();
 
-        if (!mHandler.hasCallbacks(mShowLoadingRunnable)) {
+        if (!mShowLoadingRunnableQueued) {
             mHandler.postDelayed(mShowLoadingRunnable, LOADING_DELAY);
+            mShowLoadingRunnableQueued = true;
         }
     }
 
     public void showNoResults() {
         mHandler.removeCallbacks(mShowLoadingRunnable);
+        mShowLoadingRunnableQueued = false;
 
         findViewById(R.id.progressbar).setVisibility(View.INVISIBLE);
         getNoResultsContainer().setVisibility(View.VISIBLE);

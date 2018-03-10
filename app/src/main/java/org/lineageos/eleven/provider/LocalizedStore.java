@@ -38,8 +38,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import libcore.icu.ICU;
-
 /**
  * Because sqlite localized collator isn't sufficient, we need to store more specialized logic
  * into our own db similar to contacts db.  This is most noticeable in languages like Chinese,
@@ -176,10 +174,6 @@ public class LocalizedStore {
 
             updateLocalizedStore(db, null);
 
-            // Update the ICU version used to generate the locale derived data
-            // so we can tell when we need to rebuild with new ICU versions.
-            PropertiesStore.getInstance(mContext).storeProperty(
-                    PropertiesStore.DbProperties.ICU_VERSION, ICU.getIcuVersion());
             PropertiesStore.getInstance(mContext).storeProperty(PropertiesStore.DbProperties.LOCALE,
                     locales.toString());
 

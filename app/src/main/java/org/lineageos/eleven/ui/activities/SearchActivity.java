@@ -181,6 +181,7 @@ public class SearchActivity extends FragmentActivity implements
      * A runnable to show the loading view that will be posted with a delay to prevent flashing
      */
     private Runnable mLoadingRunnable;
+    private boolean mLoadingRunnableQueued = false;
 
     /**
      * Flag used to track if we are quitting so we don't flash loaders while finishing the activity
@@ -296,6 +297,7 @@ public class SearchActivity extends FragmentActivity implements
             @Override
             public void run() {
                 setState(VisibleState.Loading);
+                mLoadingRunnableQueued = false;
             }
         };
 
@@ -311,7 +313,7 @@ public class SearchActivity extends FragmentActivity implements
             mTopLevelSearch = false;
 
             // get the search type to filter by
-            int type = getIntent().getIntExtra(SearchManager.SEARCH_MODE, -1);
+            int type = getIntent().getIntExtra("search_mode", -1);
             if (type >= 0 && type < ResultType.values().length) {
                 mSearchType = ResultType.values()[type];
             }
@@ -557,8 +559,9 @@ public class SearchActivity extends FragmentActivity implements
      */
     public void setLoading() {
         if (mCurrentState != VisibleState.Loading) {
-            if (!mHandler.hasCallbacks(mLoadingRunnable)) {
+            if (!mLoadingRunnableQueued) {
                 mHandler.postDelayed(mLoadingRunnable, LOADING_DELAY);
+                mLoadingRunnableQueued = true;
             }
         }
     }
@@ -571,6 +574,7 @@ public class SearchActivity extends FragmentActivity implements
         // remove any delayed runnables.  This has to be before mCurrentState == state
         // in case the state doesn't change but we've created a loading runnable
         mHandler.removeCallbacks(mLoadingRunnable);
+        mLoadingRunnableQueued = false;
 
         // if we are already looking at view already, just quit
         if (mCurrentState == state) {
@@ -649,7 +653,7 @@ public class SearchActivity extends FragmentActivity implements
             SearchResult item = mAdapter.getTItem(position - 1);
             Intent intent = new Intent(this, SearchActivity.class);
             intent.putExtra(SearchManager.QUERY, mFilterString);
-            intent.putExtra(SearchManager.SEARCH_MODE, item.mType.ordinal());
+            intent.putExtra("search_mode", item.mType.ordinal());
             startActivity(intent);
         } else {
             SearchResult item = mAdapter.getTItem(position);

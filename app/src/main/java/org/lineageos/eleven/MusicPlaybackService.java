@@ -14,7 +14,6 @@
 package org.lineageos.eleven;
 
 import android.Manifest.permission;
-import android.annotation.NonNull;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -56,6 +55,7 @@ import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.AlbumColumns;
 import android.provider.MediaStore.Audio.AudioColumns;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.LongSparseArray;
