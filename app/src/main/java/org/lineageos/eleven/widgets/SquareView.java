@@ -13,6 +13,7 @@
 
 package org.lineageos.eleven.widgets;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
@@ -58,6 +59,7 @@ public class SquareView extends ViewGroup {
     /**
      * {@inheritDoc}
      */
+    @SuppressLint("MissingSuperCall")
     @Override
     public void requestLayout() {
         forceLayout();
