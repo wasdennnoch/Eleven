@@ -52,6 +52,7 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.AlbumColumns;
 import android.provider.MediaStore.Audio.AudioColumns;
@@ -656,7 +657,7 @@ public class MusicPlaybackService extends Service {
         setUpMediaSession();
 
         // Initialize the preferences
-        mPreferences = getSharedPreferences("Service", 0);
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mCardId = getCardId();
 
         mShowAlbumArtOnLockscreen = mPreferences.getBoolean(
