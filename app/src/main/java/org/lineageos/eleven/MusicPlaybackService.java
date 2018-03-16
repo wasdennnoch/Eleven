@@ -17,6 +17,7 @@ import android.Manifest.permission;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -44,6 +45,7 @@ import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -97,6 +99,9 @@ import java.util.TreeSet;
 public class MusicPlaybackService extends Service {
     private static final String TAG = "MusicPlaybackService";
     private static final boolean D = false;
+
+    public static final String NOTIFICATION_CHANNEL_NAME = "Track Info";
+    public static final String NOTIFICATION_CHANNEL_ID = "eleven_playback_service";
 
     /**
      * Indicates that the music has paused or resumed
@@ -623,6 +628,8 @@ public class MusicPlaybackService extends Service {
         }
 
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        createNotificationChannel();
 
         // Initialize the favorites and recents databases
         mRecentsCache = RecentStore.getInstance(this);
@@ -1646,7 +1653,7 @@ public class MusicPlaybackService extends Service {
             mNotificationPostTime = System.currentTimeMillis();
         }
 
-        Notification.Builder builder = new Notification.Builder(this)
+        Notification.Builder builder = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setLargeIcon(artwork.getBitmap())
                 .setContentIntent(clickIntent)
@@ -1668,6 +1675,13 @@ public class MusicPlaybackService extends Service {
         builder.setColor(artwork.getVibrantDarkColor());
 
         return builder.build();
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= 25) {
+            NotificationChannel mChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW);
+            mNotificationManager.createNotificationChannel(mChannel);
+        }
     }
 
     private final PendingIntent retrievePlaybackAction(final String action) {
