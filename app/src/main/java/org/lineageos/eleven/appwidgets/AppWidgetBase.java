@@ -18,8 +18,7 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-
-import org.lineageos.eleven.MusicPlaybackService;
+import android.os.Build;
 
 public abstract class AppWidgetBase extends AppWidgetProvider {
 
@@ -27,6 +26,9 @@ public abstract class AppWidgetBase extends AppWidgetProvider {
             final ComponentName serviceName) {
         Intent intent = new Intent(action);
         intent.setComponent(serviceName);
+        if (Build.VERSION.SDK_INT >= 26) {
+            return PendingIntent.getForegroundService(context, 0, intent, 0);
+        }
         return PendingIntent.getService(context, 0, intent, 0);
     }
 

@@ -150,7 +150,7 @@ public class AppWidgetSmall extends AppWidgetBase {
     }
 
     /**
-     * Link up various button actions using {@link PendingIntents}.
+     * Link up various button actions using {@link PendingIntent}s.
      *
      */
     private void linkButtons(final Context context, final RemoteViews views) {
