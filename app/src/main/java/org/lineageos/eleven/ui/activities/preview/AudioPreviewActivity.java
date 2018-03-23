@@ -34,7 +34,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore.Audio.Media;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -157,6 +156,7 @@ public class AudioPreviewActivity extends Activity implements MediaPlayer.OnComp
             }
         }
     };
+    private boolean mAudioNoisyReceiverRegistered = false;
     private UiHandler mHandler = new UiHandler();
     private static AsyncQueryHandler sAsyncQueryHandler;
     private AudioManager mAudioManager;
@@ -174,7 +174,6 @@ public class AudioPreviewActivity extends Activity implements MediaPlayer.OnComp
     private View mContainerView;
 
     // Flags
-    private boolean mIsReceiverRegistered = false;
     private State mCurrentState = State.INIT;
 
     @Override
@@ -239,9 +238,9 @@ public class AudioPreviewActivity extends Activity implements MediaPlayer.OnComp
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        if (mIsReceiverRegistered) {
+        if (mAudioNoisyReceiverRegistered) {
             unregisterReceiver(mAudioNoisyReceiver);
-            mIsReceiverRegistered = false;
+            mAudioNoisyReceiverRegistered = false;
         }
         outState.putString(Media.TITLE, mPreviewSong.TITLE);
         outState.putString(Media.ARTIST, mPreviewSong.ARTIST);
@@ -264,9 +263,9 @@ public class AudioPreviewActivity extends Activity implements MediaPlayer.OnComp
 
     @Override
     public void onDestroy() {
-        if (mIsReceiverRegistered) {
+        if (mAudioNoisyReceiverRegistered) {
             unregisterReceiver(mAudioNoisyReceiver);
-            mIsReceiverRegistered = false;
+            mAudioNoisyReceiverRegistered = false;
         }
         stopPlaybackAndTeardown();
         super.onDestroy();
@@ -466,7 +465,7 @@ public class AudioPreviewActivity extends Activity implements MediaPlayer.OnComp
         IntentFilter localIntentFilter = new IntentFilter();
         localIntentFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         registerReceiver(this.mAudioNoisyReceiver, localIntentFilter);
-        mIsReceiverRegistered = true;
+        mAudioNoisyReceiverRegistered = true;
     }
 
     @Override

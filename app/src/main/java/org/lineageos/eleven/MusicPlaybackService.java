@@ -498,7 +498,7 @@ public class MusicPlaybackService extends Service {
 
     private String mLyrics;
 
-    private ArrayList<MusicPlaybackTrack> mPlaylist = new ArrayList<MusicPlaybackTrack>(100);
+    private ArrayList<MusicPlaybackTrack> mPlaylist = new ArrayList<>(100);
 
     private long[] mAutoShuffleList = null;
 
@@ -560,6 +560,19 @@ public class MusicPlaybackService extends Service {
             gotoNext(true);
         }
     };
+
+    private final BroadcastReceiver mAudioNoisyReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null) {
+                if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
+                    pause();
+                    mPausedByTransientLossOfFocus = false;
+                }
+            }
+        }
+    };
+    private boolean mAudioNoisyReceiverRegistered = false;
 
     /**
      * {@inheritDoc}
@@ -694,6 +707,13 @@ public class MusicPlaybackService extends Service {
         // Attach the broadcast listener
         registerReceiver(mIntentReceiver, filter);
 
+        if (!mAudioNoisyReceiverRegistered) {
+            final IntentFilter audioNoisyFilter = new IntentFilter();
+            audioNoisyFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+            registerReceiver(mAudioNoisyReceiver, audioNoisyFilter);
+            mAudioNoisyReceiverRegistered = true;
+        }
+
         // Get events when MediaStore content changes
         mMediaStoreObserver = new MediaStoreObserver(mPlayerHandler);
         getContentResolver().registerContentObserver(
@@ -815,6 +835,10 @@ public class MusicPlaybackService extends Service {
         // Close the cursor
         closeCursor();
 
+        if (mAudioNoisyReceiverRegistered) {
+            unregisterReceiver(mAudioNoisyReceiver);
+            mAudioNoisyReceiverRegistered = false;
+        }
         // Unregister the mount listener
         unregisterReceiver(mIntentReceiver);
         if (mUnmountReceiver != null) {
@@ -868,6 +892,11 @@ public class MusicPlaybackService extends Service {
         cancelNotification();
         mAudioManager.abandonAudioFocus(mAudioFocusListener);
         mSession.setActive(false);
+
+        if (mAudioNoisyReceiverRegistered) {
+            unregisterReceiver(mAudioNoisyReceiver);
+            mAudioNoisyReceiverRegistered = false;
+        }
 
         if (!mServiceInUse) {
             saveQueue(true);

@@ -13,7 +13,6 @@ package org.lineageos.eleven;
 
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioManager;
 import android.support.v4.content.WakefulBroadcastReceiver;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -29,9 +28,7 @@ public class MediaButtonIntentReceiver extends WakefulBroadcastReceiver {
     public void onReceive(final Context context, final Intent intent) {
         if (DEBUG) Log.v(TAG, "Received intent: " + intent);
         final String intentAction = intent.getAction();
-        if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intentAction)) {
-            startService(context, MusicPlaybackService.CMDPAUSE, System.currentTimeMillis());
-        } else if (Intent.ACTION_MEDIA_BUTTON.equals(intentAction)) {
+        if (Intent.ACTION_MEDIA_BUTTON.equals(intentAction)) {
             final KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
             if (event == null || event.getAction() != KeyEvent.ACTION_UP) {
                 return;
