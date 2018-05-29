@@ -24,15 +24,15 @@ android {
     }
 
     dependencies {
-        provided files('libs-provide/android_hidden_api_24.jar')
+        compileOnly files('libs-provide/android_hidden_api_24.jar')
 
-        compile 'com.android.support:appcompat-v7:27.1.0'
-        compile 'com.android.support:palette-v7:27.1.0'
-        compile 'com.android.support:cardview-v7:27.1.0'
-        compile 'com.android.support:recyclerview-v7:27.1.0'
-        compile 'com.android.support:support-v13:27.1.0'
-        compile 'com.android.support:recyclerview-v7:27.1.0'
+        implementation 'com.android.support:appcompat-v7:27.1.1'
+        implementation 'com.android.support:palette-v7:27.1.1'
+        implementation 'com.android.support:cardview-v7:27.1.1'
+        implementation 'com.android.support:recyclerview-v7:27.1.1'
+        implementation 'com.android.support:support-v13:27.1.1'
+        implementation 'com.android.support:recyclerview-v7:27.1.1'
 
-        compile 'com.google.guava:guava:24.0-android'
+        implementation 'com.google.guava:guava:24.0-android'
     }
 }

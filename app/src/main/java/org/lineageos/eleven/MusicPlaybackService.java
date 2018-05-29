@@ -1707,7 +1707,7 @@ public class MusicPlaybackService extends Service {
     }
 
     private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= 25) {
+        if (Build.VERSION.SDK_INT >= 26) {
             NotificationChannel mChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW);
             mNotificationManager.createNotificationChannel(mChannel);
         }
